@@ -1,6 +1,6 @@
 CFLAGS?=-O2 -g -Wall -W 
 CFLAGS+= -I./aisdecoder -I ./aisdecoder/lib -I./tcp_listener
-LDFLAGS+=-lpthread -lm
+LDFLAGS+=-lpthread -lm -luhd
 
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)

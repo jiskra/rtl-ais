@@ -30,6 +30,7 @@ struct rtl_ais_config
     int use_tcp_listener, tcp_keep_ais_time;
     /* Aisdecoder */
     int	show_levels, debug_nmea;
+    int isUHD;
     char *port, *host, *filename;
 };
 

@@ -25,62 +25,58 @@ typedef void* rtlsdr_dev_t;
 #include "convenience.h"
 #include "rtl_ais.h"
 
-void usage(void)
-{
-	fprintf(stderr,
-		"rtl_ais, a simple AIS tuner\n"
-		"\t and generic dual-frequency FM demodulator\n\n"
-		"(probably not a good idea to use with e4000 tuners)\n"
-		"Use: rtl_ais [options] [outputfile]\n"
-		"\t[-l left_frequency (default: 161.975M)]\n"
-		"\t[-r right_frequency (default: 162.025M)]\n"
-		"\t    left freq < right freq\n"
-		"\t    frequencies must be within 1.2MHz\n"
-		"\t[-s sample_rate (default: 24k)]\n"
-		"\t    maximum value, might be down to 12k\n"
-		"\t[-o output_rate (default: 48k)]\n"
-		"\t    must be equal or greater than twice -s value\n"
-		"\t[-E toggle edge tuning (default: off)]\n"
-		"\t[-D toggle DC filter (default: on)]\n"
-		//"\t[-O toggle oversampling (default: off)\n"
-		"\t[-d device_index (default: 0)]\n"
-		"\t[-g tuner_gain (default: automatic)]\n"
-		"\t[-p ppm_error (default: 0)]\n"
-		"\t[-R enable RTL chip AGC (default: off)]\n"
-		"\t[-A turn off built-in AIS decoder (default: on)]\n"
-		"\t    use this option to output samples to file or stdout.\n"
-		"\tBuilt-in AIS decoder options:\n"
-		"\t[-h host (default: 127.0.0.1)]\n"
-		"\t[-P port (default: 10110)]\n"
-		"\t[-T use TCP communication, rtl-ais is tcp server ( -h is ignored)\n"
-		"\t[-t time to keep ais messages in sec, using tcp listener (default: 15)\n"
-		"\t[-n log NMEA sentences to console (stderr) (default off)]\n"
-		"\t[-L log sound levels to console (stderr) (default off)]\n\n"
-		"\t[-S seconds_for_decoder_stats (default 0=off)]\n\n"
-		"\tWhen the built-in AIS decoder is disabled the samples are sent to\n"
-		"\tto [outputfile] (a '-' dumps samples to stdout)\n"
-		"\t    omitting the filename also uses stdout\n\n"
-		"\tOutput is stereo 2x16 bit signed ints\n\n"
-		"\tExamples:\n"
-		"\tReceive AIS traffic,sent UDP NMEA sentences to 127.0.0.1 port 10110\n"
-		"\t     and log the senteces to console:\n\n"
-		"\trtl_ais -n\n\n"
-		"\tTune two fm stations and play one on each channel:\n\n"
-		"\trtl_ais -l233.15M  -r233.20M -A  | play -r48k -traw -es -b16 -c2 -V1 - "
-		"\n");
+void usage(void) {
+	fprintf(stderr, "rtl_ais, a simple AIS tuner\n"
+			"\t and generic dual-frequency FM demodulator\n\n"
+			"(probably not a good idea to use with e4000 tuners)\n"
+			"Use: rtl_ais [options] [outputfile]\n"
+			"\t[-l left_frequency (default: 161.975M)]\n"
+			"\t[-r right_frequency (default: 162.025M)]\n"
+			"\t    left freq < right freq\n"
+			"\t    frequencies must be within 1.2MHz\n"
+			"\t[-s sample_rate (default: 24k)]\n"
+			"\t    maximum value, might be down to 12k\n"
+			"\t[-o output_rate (default: 48k)]\n"
+			"\t    must be equal or greater than twice -s value\n"
+			"\t[-E toggle edge tuning (default: off)]\n"
+			"\t[-D toggle DC filter (default: on)]\n"
+			//"\t[-O toggle oversampling (default: off)\n"
+			"\t[-d device_index (default: 0)]\n"
+			"\t[-g tuner_gain (default: automatic)]\n"
+			"\t[-p ppm_error (default: 0)]\n"
+			"\t[-R enable RTL chip AGC (default: off)]\n"
+			"\t[-A turn off built-in AIS decoder (default: on)]\n"
+			"\t    use this option to output samples to file or stdout.\n"
+			"\tBuilt-in AIS decoder options:\n"
+			"\t[-h host (default: 127.0.0.1)]\n"
+			"\t[-P port (default: 10110)]\n"
+			"\t[-T use TCP communication, rtl-ais is tcp server ( -h is ignored)\n"
+			"\t[-t time to keep ais messages in sec, using tcp listener (default: 15)\n"
+			"\t[-n log NMEA sentences to console (stderr) (default off)]\n"
+			"\t[-L log sound levels to console (stderr) (default off)]\n\n"
+			"\t[-S seconds_for_decoder_stats (default 0=off)]\n\n"
+			"\tWhen the built-in AIS decoder is disabled the samples are sent to\n"
+			"\tto [outputfile] (a '-' dumps samples to stdout)\n"
+			"\t    omitting the filename also uses stdout\n\n"
+			"\tOutput is stereo 2x16 bit signed ints\n\n"
+			"\tExamples:\n"
+			"\tReceive AIS traffic,sent UDP NMEA sentences to 127.0.0.1 port 10110\n"
+			"\t     and log the senteces to console:\n\n"
+			"\trtl_ais -n\n\n"
+			"\tTune two fm stations and play one on each channel:\n\n"
+			"\trtl_ais -l233.15M  -r233.20M -A  | play -r48k -traw -es -b16 -c2 -V1 - "
+			"\n");
 	exit(1);
 }
 
 static volatile int do_exit = 0;
-static void sighandler(int signum)
-{
-        signum = signum;
+static void sighandler(int signum) {
+	signum = signum;
 	fprintf(stderr, "Signal caught, exiting!\n");
 	do_exit = 1;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 #ifndef WIN32
 	struct sigaction sigact;
 
@@ -95,28 +91,27 @@ int main(int argc, char **argv)
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 #endif
-        int opt;
-	
-        struct rtl_ais_config config;
-        rtl_ais_default_config(&config);
+	int opt;
 
-        config.host = strdup("127.0.0.1");
-        config.port = strdup("10110");
-        
-	while ((opt = getopt(argc, argv, "l:r:s:o:EODd:g:p:RATtP:h:nLS:?")) != -1)
-	{
+	struct rtl_ais_config config;
+	rtl_ais_default_config(&config);
+
+	config.host = strdup("127.0.0.1");
+	config.port = strdup("10110");
+
+	while ((opt = getopt(argc, argv, "l:r:s:o:EODd:g:p:URATtP:h:nLS:?")) != -1) {
 		switch (opt) {
 		case 'l':
-                        config.left_freq = (int)atofs(optarg);
+			config.left_freq = (int) atofs(optarg);
 			break;
 		case 'r':
-			config.right_freq = (int)atofs(optarg);
+			config.right_freq = (int) atofs(optarg);
 			break;
 		case 's':
-			config.sample_rate = (int)atofs(optarg);
-                        break;
+			config.sample_rate = (int) atofs(optarg);
+			break;
 		case 'o':
-			config.output_rate = (int)atofs(optarg);
+			config.output_rate = (int) atofs(optarg);
 			break;
 		case 'E':
 			config.edge = !config.edge;
@@ -132,35 +127,39 @@ int main(int argc, char **argv)
 			config.dev_given = 1;
 			break;
 		case 'g':
-			config.gain = (int)(atof(optarg) * 10);
+			config.gain = (int) (atof(optarg) * 10);
 			break;
 		case 'p':
 			config.ppm_error = atoi(optarg);
 			config.custom_ppm = 1;
 			break;
+		case 'U':
+			config.isUHD = 1;
+			break;
 		case 'R':
-			config.rtl_agc=1;
+			config.rtl_agc = 1;
 			break;
 		case 'A':
-			config.use_internal_aisdecoder=0;
+			config.use_internal_aisdecoder = 0;
 			break;
 		case 'P':
-			config.port=strdup(optarg);
+			config.port = strdup(optarg);
 			break;
-                case 'T':
-                        config.use_tcp_listener=1;
-                        break;
-                case 't':
-                        config.tcp_keep_ais_time = atoi(optarg);
-                        break;
+		case 'T':
+			config.use_tcp_listener = 1;
+			break;
+		case 't':
+			config.tcp_keep_ais_time = atoi(optarg);
+			break;
+
 		case 'h':
-			config.host=strdup(optarg);
+			config.host = strdup(optarg);
 			break;
 		case 'L':
-			config.show_levels=1;
+			config.show_levels = 1;
 			break;
 		case 'S':
-			config.seconds_for_decoder_stats=atoi(optarg);
+			config.seconds_for_decoder_stats = atoi(optarg);
 			break;
 		case 'n':
 			config.debug_nmea = 1;
@@ -199,30 +198,35 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Internal AIS decoder disabled.\n");
 	}
 
-        struct rtl_ais_context *ctx = rtl_ais_start(&config);
-        if(!ctx) {
-                fprintf(stderr, "\nrtl_ais_start failed, exiting...\n");
-                exit(1);
-        }
-        	/* 
-	  aidecoder.c appends the messages to a queue that can be used for a 
-	  routine if rtl_ais is compiled as lib. Here we only loop and dequeue
-	  the messages, and the puts() sentence that print the message is  
-	  commented out. If the -n parameter is used the messages are printed from 
-	  nmea_sentence_received() in aidecoder.c 
-	  */
-	while(!do_exit && rtl_ais_isactive(ctx)) {
+	struct rtl_ais_context *ctx;
+	if (config.isUHD)
+		ctx = uhd_ais_start(&config);
+	else
+		ctx = rtl_ais_start(&config);
+	if (!ctx) {
+		fprintf(stderr, "\nrtl_ais_start failed, exiting...\n");
+		exit(1);
+	}
+	/*
+	 aidecoder.c appends the messages to a queue that can be used for a
+	 routine if rtl_ais is compiled as lib. Here we only loop and dequeue
+	 the messages, and the puts() sentence that print the message is
+	 commented out. If the -n parameter is used the messages are printed from
+	 nmea_sentence_received() in aidecoder.c
+	 */
+	while (!do_exit && rtl_ais_isactive(ctx)) {
 		const char *str;
-		if(config.use_internal_aisdecoder)
-		{
+		if (config.use_internal_aisdecoder) {
 			// dequeue
-			while((str = rtl_ais_next_message(ctx)))
-			{
+			while ((str = rtl_ais_next_message(ctx))) {
 				//puts(str); or code something that fits your needs
 			}
 		}
-            usleep(50000);
-        }
-        rtl_ais_cleanup(ctx);
-        return 0;
+		usleep(50000);
+	}
+	if (config.isUHD)
+		uhd_ais_cleanup(ctx);
+	else
+		rtl_ais_cleanup(ctx);
+	return 0;
 }
